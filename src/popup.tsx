@@ -1,51 +1,38 @@
+import { Client } from "@notionhq/client";
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom";
+import ToDoCard from "./Components/ToDoCard";
+import ToDoCardView from "./Components/ToDoCardView";
+import { SettingJson, ToDo } from "./interface";
+import { getToDos, updateToDo } from "./notion";
 
 const Popup = () => {
-  const [count, setCount] = useState(0);
-  const [currentURL, setCurrentURL] = useState<string>();
-
-  useEffect(() => {
-    chrome.action.setBadgeText({ text: count.toString() });
-  }, [count]);
-
-  useEffect(() => {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      setCurrentURL(tabs[0].url);
-    });
-  }, []);
-
-  const changeBackground = () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-      const tab = tabs[0];
-      if (tab.id) {
-        chrome.tabs.sendMessage(
-          tab.id,
-          {
-            color: "#555555",
-          },
-          (msg) => {
-            console.log("result message:", msg);
-          }
-        );
-      }
-    });
+  const [todos, setTodos] = useState<ToDo[]>([]);
+  const getCards = async () => {
+    const todoTmp = await getToDos();
+    if (!todoTmp) return;
+    setTodos(todoTmp);
   };
-
+  useEffect(() => {
+    getCards();
+  }, []);
+  const updateTodo = () => {
+    getCards();
+  };
   return (
-    <>
-      <ul style={{ minWidth: "700px" }}>
-        <li>Current URL: {currentURL}</li>
-        <li>Current Time: {new Date().toLocaleTimeString()}</li>
-      </ul>
-      <button
-        onClick={() => setCount(count + 1)}
-        style={{ marginRight: "5px" }}
-      >
-        count up
-      </button>
-      <button onClick={changeBackground}>change background</button>
-    </>
+    <div style={{ width: "400px" }} className="window">
+      <div className="title-bar">
+        <div className="title-bar-text">NOTIONﾀｽｸ管理ﾋﾞｭｰ</div>
+        <div className="title-bar-controls">
+          <button aria-label="Minimize"></button>
+          <button aria-label="Maximize"></button>
+          <button aria-label="Close"></button>
+        </div>
+      </div>
+      <div className="window-body">
+        <ToDoCardView todos={todos} onUpdateToDo={updateTodo} />
+      </div>
+    </div>
   );
 };
 
